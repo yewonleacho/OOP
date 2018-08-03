@@ -1,39 +1,60 @@
 #include "std_lib_facilities.h"
+#include "token.h"
 
 
-class Token{
-	public:
-		char kind;
-		double value;
-};
-
-Token get_token(); 
-
-vector<Token> tokens;
-
-int main(){
-	Token t = get_token();
-	while (t.kind != 'q'){
-		tokens.push_back(t);
-		t = get_token();
-	}
-	for (Token tok: tokens){    //If you are looping over the items in the vector, just use this form, not counting
-		cout << "Token of kind: " << tok.kind << " with val " << tok.value << endl;
-	}
+std::ostream& operator << (std::ostream& os, Token const &t){
+	return os << t.kind;
 }
 
-Token get_token(){
+void Token_stream::putback(Token t){
+	buffer.push_back(t);
+}
+
+Token Token_stream::popback(){
+	Token t = buffer.back();
+	buffer.pop_back();
+	return t;
+}
+
+Token Token_stream::get(){
+	if (buffer.size() > 0){
+		Token t = popback();
+		return t;
+	}
 	char ch;
 	cin >> ch;
 	switch(ch){
-		case '+': case '-': case '*': case '/': case '(': case ')': case 'q': 
-			return Token{ch}; 
-		case'0': case'1': case'2': case'3': case'4': case'5': case'6': case'7': case'8': case'9': {
+		case print: case quit: case mod: case power:
+		case '(': case ')': case '+': case '-': case '*': case '/': case '=':
+			return Token{ch};
+		case '.': case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7':
+		case '8': case '9':{
 			cin.putback(ch);
 			double val;
 			cin >> val;
-			return Token{'8', val};
-			}	
+			return Token{number, val};
 		}
+		default: 
+			if (isalpha(ch)){
+				string s;
+				s += ch;
+				while (cin.get(ch) && (isalpha(ch) || isdigit(ch))) s += ch;
+				cin.putback(ch);
+				return Token{name, s};
+			}
+			return Token{invalid, double(ch)};
 	}
+	return Token{quit};
+}
+
+void Token_stream::ignore(char c){
+	while (buffer.size() > 0){
+		Token t = popback();
+		if (t.kind == c) return;
+	}
+
+	char ch = 0;
+	while (cin >> ch)
+		if (ch == c) return;
+}
 
