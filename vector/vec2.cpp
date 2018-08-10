@@ -23,7 +23,8 @@ public:
 		size = arg.size;
 		return *this;
 	}
-	
+
+	double operator[](int n){return elem[n];};
 	double get(int i){return elem[i];};
 	void set(int i, double d){elem[i] = d;};
 };
